@@ -58,7 +58,7 @@ if (!wantExact) {
   if (!nodeVersion) {
     console.error('Unable to find config for node version.');
     console.error('Are you sure the app bundle is available in the container?');
-    console.error('Learn how to use the image at https://github.com/zodern/meteor-docker');
+    console.error('Learn how to use the image at https://github.com/cunneen/meteor-docker');
     process.exit(1);
   }
 

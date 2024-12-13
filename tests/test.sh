@@ -1,19 +1,33 @@
 set -e
-docker build -t zodern/meteor ../image
-docker build -t zodern/meteor:root ../root-image
 
+TEMP_DIR=$(mktemp -d -u -p '' docker-meteor-tests.XXXXXXXX)
+
+# remove TEMP_DIR upon exit
+trap "echo Removing $TEMP_DIR && rm -rf $TEMP_DIR" QUIT EXIT KILL TERM
+
+# docker build -t zodern/meteor ../image
+echo "docker buildx build --load --platform linux/arm64 -t  cunneen/meteor ../image"
+docker buildx build --load --platform linux/arm64 -t cunneen/meteor ../image
+
+# docker build -t cunneen/meteor:root ../root-image
+echo "docker buildx build --load --platform linux/arm64 -t cunneen/meteor:root ../root-image"
+docker buildx build --load --platform linux/arm64  -t cunneen/meteor:root ../root-image
+
+echo "checking for meteor (downloading if not found)..."
 command -v meteor >/dev/null 2>&1 || { curl https://install.meteor.com/ | sh; }
 
-docker rm -f meteor-docker-test >/dev/null || true
+echo "removing any old containers"
+docker rm -f meteor-docker-test >/dev/null 2>&1 || true
+echo "=> Copying from ${PWD}/../ to ${TEMP_DIR}"
+cp -r ../ $TEMP_DIR
+echo "=> Changing directory to ${TEMP_DIR}/tests"
+cd $TEMP_DIR/tests
 
-sudo rm -rf /tmp/docker-meteor-tests
-mkdir /tmp/docker-meteor-tests
-cp -r ../ /tmp/docker-meteor-tests
-cd /tmp/docker-meteor-tests/tests
-
+echo "removing app, bundle, archive"
 rm -rf ./app
 rm -rf ./bundle
 rm -rf ./archive
+echo "making folders app, bundle, archive"
 mkdir ./app
 mkdir ./bundle
 mkdir ./archive
@@ -56,7 +70,9 @@ change_version() {
 
 build_app() {
   echo "=> Building app"
-  sudo rm -rf /tmp/docker-meteor-tests/bundle || true
+  echo "=> Removing bundle from $TEMP_DIR/bundle"
+  rm -rf $TEMP_DIR/bundle || true
+  echo "Running meteor build"
   meteor build ../bundle --debug
 }
 
@@ -69,7 +85,16 @@ test_bundle() {
   echo "=> Testing bundle volume"
   mv ../bundle/app.tar.gz ../bundle/bundle.tar.gz
 
-  echo "==> Creating docker container"
+  echo "==> Running docker container"
+
+  echo docker run \
+    -v "$PWD"/../bundle:/bundle \
+    -e "ROOT_URL=http://localhost.com" \
+    -e "NPM_INSTALL_OPTIONS=--no-bin-links" \
+    -p 3000:3000 \
+    -d \
+    --name meteor-docker-test \
+    "$DOCKER_IMAGE"
 
   docker run \
     -v "$PWD"/../bundle:/bundle \
@@ -91,15 +116,26 @@ test_bundle_docker() {
 
   cat > Dockerfile << EOT
 FROM $DOCKER_IMAGE
-COPY ./bundle.tar.gz /bundle/bundle.tar.gz
+RUN whoami
+RUN ls -l
+COPY --chown=app:app ./bundle.tar.gz /bundle/bundle.tar.gz
 EOT
 
-  hide_output docker build --build-arg NODE_VERSION="$NODE_VERSION" -t zodern/meteor-test .
+  echo "running docker buildx build --load --platform linux/arm64  --build-arg NODE_VERSION=$NODE_VERSION -t cunneen/meteor-test ."
+
+  hide_output docker buildx build --load --platform linux/arm64  --build-arg NODE_VERSION="$NODE_VERSION" -t cunneen/meteor-test .
+  
+  echo docker run --name meteor-docker-test \
+  -e "ROOT_URL=http://app.com" \
+  -p 3000:3000 \
+  -d \
+  cunneen/meteor-test
+
   docker run --name meteor-docker-test \
   -e "ROOT_URL=http://app.com" \
   -p 3000:3000 \
   -d \
-  zodern/meteor-test
+  cunneen/meteor-test
 
   cd ../app
 }
@@ -113,16 +149,18 @@ test_built_docker() {
   cd ../bundle/bundle
   cat <<EOT > Dockerfile
 FROM $DOCKER_IMAGE
+RUN whoami
+RUN ls -l
 COPY --chown=app:app . /built_app
 RUN cd /built_app/programs/server && npm install $NPM_OPTIONS
 EOT
 
-  hide_output docker build --build-arg NODE_VERSION="$NODE_VERSION" -t zodern/meteor-test .
+  hide_output docker buildx build --load --platform linux/arm64  --build-arg NODE_VERSION="$NODE_VERSION" -t cunneen/meteor-test .
   docker run --name meteor-docker-test \
   -e "ROOT_URL=http://app.com" \
   -p 3000:3000 \
   -d \
-  zodern/meteor-test
+  cunneen/meteor-test
 
   cd ../../app
 }
@@ -172,18 +210,6 @@ test_versions() {
   echo "--- Testing Docker Image $DOCKER_IMAGE ---"
 
   if [[ -z ${METEOR_TEST_OPTION+x} ]]; then
-    test_version "--release=1.2.1"
-    test_version "--release=1.3.5.1"
-    test_version "--release=1.4.4.6"
-    test_version "--release=1.5.4.1"
-    test_version "--release=1.6.1.4"
-    test_version "--release=1.7.0.5"
-    test_version "--release=1.8.1"
-    test_version "--release=1.9.3"
-    test_version "--release=1.10.2"
-    test_version "--release=1.11.1"
-    test_version "--release=2.1.1"
-    test_version "--release=2.2"
     test_version "--release=2.3.2"
     test_version "--release=2.4.1"
     test_version "--release=2.5.6"
@@ -195,6 +221,17 @@ test_versions() {
     test_version "--release=2.11.0"
     test_version "--release=2.12"
     test_version "--release=2.13.3"
+    test_version "--release=2.14.0"
+    test_version "--release=2.15.0"
+    test_version "--release=2.16"
+
+    test_version "--release=3.0"
+    test_version "--release=3.0.1"
+    test_version "--release=3.0.2"
+    test_version "--release=3.0.3"
+    test_version "--release=3.0.4"
+    test_version "--release=3.1.0"
+
 
     # Latest version
     test_version
@@ -208,10 +245,10 @@ export NODE_TLS_REJECT_UNAUTHORIZED=0
 # Fixes some Meteor versions crashing when creating a debug build 
 export DISABLE_REACT_FAST_REFRESH="true"
 
-DOCKER_IMAGE="zodern/meteor"
+DOCKER_IMAGE="cunneen/meteor"
 NPM_OPTIONS=""
 test_versions
 
-DOCKER_IMAGE="zodern/meteor:root"
+DOCKER_IMAGE="cunneen/meteor:root"
 NPM_OPTIONS="--unsafe-perm"
 test_versions

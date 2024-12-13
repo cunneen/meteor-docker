@@ -3,3 +3,7 @@ node_modules
 # from tests
 bundle
 app
+
+/.history
+image/setup/makescripts.sh
+image/scripts/makescripts.sh

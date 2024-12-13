@@ -1,7 +1,9 @@
-zodern/meteor Docker Image
+cunneen/meteor Docker Image
 ===
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/zodern/meteor-docker/test-publish.yaml?branch-master&style=flat-square) ![Docker Pulls](https://img.shields.io/docker/pulls/zodern/meteor?style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/cunneen/meteor-docker/test-publish.yaml?branch-master&style=flat-square) ![Docker Pulls](https://img.shields.io/docker/pulls/cunneen/meteor?style=flat-square)
+
+***NOTE:*** This is a fork of [zodern/meteor-docker](https://github.com/zodern/meteor-docker) , modified to add ARM support for meteor 2.x versions requiring node 14.x (i.e. meteor v2.3 to v2.16). Once I've tested this to ensure its stability, I'll submit a pull request to zodern/meteor-docker.
 
 Docker image to run Meteor apps.
 
@@ -15,9 +17,9 @@ Docker image to run Meteor apps.
 
 ## Tags
 
-- `zodern/meteor` The recommended version. Runs the app as a non-root user.
-- `zodern/meteor:root` Compatible with meteord. Runs the app as the root user and has phantomjs installed. Any notes below about permissions do not apply to this image.
-- `zodern/meteor:slim` Coming soon. Is a smaller image without node or npm pre-installed. During ONBUILD or when starting the app, it will install the correct version.
+- `cunneen/meteor` The recommended version. Runs the app as a non-root user.
+- `cunneen/meteor:root` Compatible with meteord. Runs the app as the root user and has phantomjs installed. Any notes below about permissions do not apply to this image.
+- `cunneen/meteor:slim` Coming soon. Is a smaller image without node or npm pre-installed. During ONBUILD or when starting the app, it will install the correct version.
 
 ## How To Use
 
@@ -27,7 +29,7 @@ This image runs the app with the `app` user. The owner of any files or folders y
 
 ### Meteor Up
 
-In your mup config, change `app.docker.image` to `zodern/meteor`.
+In your mup config, change `app.docker.image` to `cunneen/meteor`.
 
 If you want to use mup's `buildInstructions` option to run commands as root, you can do so by temporarily changing the user:
 
@@ -48,7 +50,7 @@ You can create the bundle with the `meteor build` command. The bundle should be 
 Create a file named `Dockerfile` and add the following:
 
 ```Dockerfile
-FROM zodern/meteor
+FROM cunneen/meteor
 COPY --chown=app:app ../path/to/bundle.tar.gz /bundle/bundle.tar.gz
 ```
 
@@ -70,7 +72,7 @@ If any Node versions in `image/setup/versions.json` match the same major version
 Run
 
 ```bash
-  docker run --name my-meteor-app -v /path/to/folder/with/bundle:/bundle -p 3000:3000 -e "ROOT_URL=http://app.com" zodern/meteor
+  docker run --name my-meteor-app -v /path/to/folder/with/bundle:/bundle -p 3000:3000 -e "ROOT_URL=http://app.com" cunneen/meteor
 ```
 
 ### Built app
@@ -88,7 +90,7 @@ The bundle should be available in the container at `/built_app`.
 Create a file named `Dockerfile` and copy the following into it:
 
 ```Dockerfile
-FROM zodern/meteor
+FROM cunneen/meteor
 COPY --chown=app:app ./path/to/bundle /built_app
 RUN cd /built_app/programs/server && npm install
 ```
@@ -115,7 +117,7 @@ npm install
 Next, start the docker container with
 
 ```bash
-docker run --name my-meteor-app -v /path/to/bundle:/built_app -p 3000:3000 -e "ROOT_URL=http://app.com" zodern/meteor
+docker run --name my-meteor-app -v /path/to/bundle:/built_app -p 3000:3000 -e "ROOT_URL=http://app.com" cunneen/meteor
 ```
 
 ### Options

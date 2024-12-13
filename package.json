@@ -1,7 +1,7 @@
 {
-  "name": "meteor-docker",
-  "version": "0.1.0",
-  "description": "",
+  "name": "@cunneen/meteor-docker",
+  "version": "1.0.0",
+  "description": "Fork of zodern/meteor docker image for ARM64",
   "scripts": {
     "pretest": "npm run lint",
     "test": "cd tests && bash test.sh",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zodern/meteor-docker.git"
+    "url": "https://github.com/cunneen/meteor-docker.git"
   },
-  "author": "zodern",
+  "author": "cunneen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zodern/meteor-docker/issues"
+    "url": "https://github.com/cunneen/meteor-docker/issues"
   },
-  "homepage": "https://github.com/zodern/meteor-docker#readme",
+  "homepage": "https://github.com/cunneen/meteor-docker#readme",
   "private": true,
   "dependencies": {
     "@semantic-release/exec": "^6.0.3",

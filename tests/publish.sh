@@ -2,14 +2,14 @@ set -e
 VERSION="$1"
 
 # Normal image
-docker tag zodern/meteor zodern/meteor:latest
-docker tag zodern/meteor zodern/meteor:$VERSION
+docker tag cunneen/meteor cunneen/meteor:latest
+docker tag cunneen/meteor cunneen/meteor:$VERSION
 
-docker push zodern/meteor:latest
-docker push zodern/meteor:$VERSION
+docker push cunneen/meteor:latest
+docker push cunneen/meteor:$VERSION
 
 # root image
-docker tag zodern/meteor:root zodern/meteor:$VERSION-root
+docker tag cunneen/meteor:root cunneen/meteor:$VERSION-root
 
-docker push zodern/meteor:root
-docker push zodern/meteor:$VERSION-root
+docker push cunneen/meteor:root
+docker push cunneen/meteor:$VERSION-root

@@ -10,6 +10,8 @@ change_user () {
       groupmod -g $HOST_GUID app
 
       chown -R app:app /home/app
+      chown -R app /bundle
+      chmod -R u+w /bundle
     fi
 }
 
